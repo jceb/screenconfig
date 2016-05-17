@@ -1,0 +1,2 @@
+#!/bin/sh
+cd srandrd && make clean && make DESTDIR=~/.local PREFIX= install
