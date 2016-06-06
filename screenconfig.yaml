@@ -11,6 +11,9 @@ samsung: &samsung
   edid: 2D4C03E800000000
   wallpaper: ~/wallpaper1920x1200.png
   position: {crtc: *laptop, position: left-of}
+dell: &dell
+  edid: AC1040613239334C
+  wallpaper: ~/wallpaper1920x1080.png
 default:
   wallpaper: ~/wallpaper1920x1200.png
   resolution: auto
