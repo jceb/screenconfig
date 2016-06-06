@@ -1,0 +1,17 @@
+---
+laptop: &laptop
+  edid: E430044600000000
+  wallpaper: ~/wallpaper1920x1080.png
+iiyama: &iiyama
+  edid: CD2646B40000306A
+  wallpaper: ~/wallpaper1280x1024.png
+  # resolution: 800x600
+  position: {crtc: *laptop, position: right-of}
+samsung: &samsung
+  edid: 2D4C03E800000000
+  wallpaper: ~/wallpaper1920x1200.png
+  position: {crtc: *laptop, position: left-of}
+default:
+  wallpaper: ~/wallpaper1920x1200.png
+  resolution: auto
+  position: {crtc: *laptop, position: above}

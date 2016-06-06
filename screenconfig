@@ -1,0 +1,102 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# See LICENSE for copyright and license details
+
+from yaml import load
+import os
+import sys
+import subprocess
+
+CONNECTED = 'connected'
+
+POSITION = {
+		'above':    '--above',
+		'left-of':  '--left-of',
+		'right-of': '--right-of',
+		'below':    '--below',
+		'mirror':   '--same-as',
+		'same-as':  '--same-as',
+		}
+DEFAULT = 'default'
+
+def get_crtc(sc, edid):
+	return [ crtc for crtc in sc
+			if crtc != DEFAULT and sc[crtc].get('edid') == edid ][0]
+
+def get_attr(sc, current, attr, default=None):
+	if attr in sc[current]:
+		return sc[current][attr]
+	elif DEFAULT in sc:
+		return sc[DEFAULT].get(attr)
+	return default
+
+def get_wallpaper(sc, edid):
+	crtc = get_crtc(sc, edid)
+	wallpaper = sc[crtc].get('wallpaper')
+	if not wallpaper and DEFAULT in sc:
+		wallpaper = sc[DEFAULT].get('wallpaper')
+	return os.path.expandvars(os.path.expanduser(wallpaper))
+
+OUTPUTS = []
+def get_outputs():
+	global OUTPUTS
+	if not OUTPUTS:
+		OUTPUTS = [ line.split() for line in
+				subprocess.check_output(['srandrd', 'list']).decode('utf-8').split(os.linesep) ]
+	return OUTPUTS
+
+def set_wallpapers(sc):
+	outputs = get_outputs()
+	wallpapers = []
+	for output in outputs:
+		if len(output) == 2:
+			wallpaper = get_wallpaper(sc, output[1])
+			if wallpaper:
+				wallpapers.append(wallpaper)
+	if wallpapers:
+		return subprocess.call(['feh', '--bg-fill', '--no-fehbg', *wallpapers])
+
+def activate_crtc(sc, edid, output):
+	crtc = get_crtc(sc, edid)
+	if not crtc and DEFAULT in sc:
+		crtc = DEFAULT
+	cmd = ['xrandr', '--output', output]
+	resolution = get_attr(sc, crtc, 'resolution', 'auto')
+	if resolution == 'auto':
+		cmd.append('--auto')
+	else:
+		cmd.extend(('--mode', resolution))
+	position = get_attr(sc, crtc, 'position')
+	if position:
+		p_crtc = position.get('crtc')
+		p_position = position.get('position')
+		if not p_crtc or not p_position:
+			return
+		outputs = get_outputs()
+		for output in outputs:
+			if len(output) == 2 and output[1] == p_crtc.get('edid'):
+				cmd.extend((POSITION[p_position], output[0]))
+				break
+	return subprocess.call(cmd)
+
+
+def main():
+	global DEFAULT
+	DEFAULT = os.environ.get('SCREENCONFIG_DEFAULT', 'default')
+	action = os.environ.get('SRANDRD_ACTION')
+	output = None
+	if action:
+		output, action = action.split()
+	if action == CONNECTED:
+		with open(os.path.expandvars(os.path.join(
+			os.environ.get('XDG_CONFIG_HOME', os.path.join('$HOME', '.config')),
+			'screenconfig', 'screenconfig.yaml'))) as f:
+			sc = load(f)
+			edid = os.environ.get('SRANDRD_EDID')
+			screenid = os.environ.get('SRANDRD_SCREENID')
+			activate_crtc(sc, edid, output)
+			set_wallpapers(sc)
+
+if __name__ == "__main__":
+	sys.exit(main())
