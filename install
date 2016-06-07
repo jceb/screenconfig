@@ -1,6 +1,0 @@
-#!/bin/sh
-mkdir -p ~/.local/bin
-install -m 755 screenconfig ~/.local/bin
-mkdir -p ~/.config/screenconfig
-install -m 644 screenconfig.yaml ~/.config/screenconfig
-cd srandrd && make clean && make DESTDIR=~/.local PREFIX= install
