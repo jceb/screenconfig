@@ -57,6 +57,7 @@ point:
 
 ## Installation
 
+* Install [`srandrd`](https://github.com/jceb/srandrd)
 * Copy `screenconfig` to a directory in `$PATH`
 * Create a personal configuration in `~/.config/screenconfig/screenconfig.yaml`
 
