@@ -20,22 +20,45 @@ POSITION = {
 		}
 DEFAULT = 'default'
 
+def _call(f, cmd, *args, **kwargs):
+	# print(cmd)
+	return f(cmd, *args, **kwargs)
+
+def call(cmd, *args, **kwargs):
+	return _call(subprocess.call, cmd, *args, **kwargs)
+
+def check_output(cmd, *args, **kwargs):
+	return _call(subprocess.check_output, cmd, *args, **kwargs)
+
 def get_crtc(sc, edid):
-	return [ crtc for crtc in sc
-			if crtc != DEFAULT and sc[crtc].get('edid') == edid ][0]
+	res = [ crtc for crtc in sc
+			if crtc != DEFAULT and edid in sc[crtc].get('edid', []) ]
+	if res:
+		return res[0]
+	return None
 
 def get_attr(sc, current, attr, default=None):
+	res = default
 	if attr in sc[current]:
-		return sc[current][attr]
+		res = sc[current][attr]
 	elif DEFAULT in sc:
-		return sc[DEFAULT].get(attr)
-	return default
+		res = sc[DEFAULT].get(attr)
+	# print('get_attr', current, attr, res)
+	return res
 
 def get_wallpaper(sc, edid):
 	crtc = get_crtc(sc, edid)
+	if not crtc:
+		if DEFAULT in sc:
+			crtc = DEFAULT
+		else:
+			return None
 	wallpaper = sc[crtc].get('wallpaper')
-	if not wallpaper and DEFAULT in sc:
-		wallpaper = sc[DEFAULT].get('wallpaper')
+	if not wallpaper:
+		if DEFAULT in sc:
+			wallpaper = sc[DEFAULT].get('wallpaper')
+		else:
+			return None
 	return os.path.expandvars(os.path.expanduser(wallpaper))
 
 OUTPUTS = []
@@ -43,7 +66,7 @@ def get_outputs():
 	global OUTPUTS
 	if not OUTPUTS:
 		OUTPUTS = [ line.split() for line in
-				subprocess.check_output(['srandrd', 'list']).decode('utf-8').split(os.linesep) ]
+				check_output(['srandrd', 'list']).decode('utf-8').split(os.linesep) ]
 	return OUTPUTS
 
 def set_wallpapers(sc):
@@ -57,12 +80,15 @@ def set_wallpapers(sc):
 	if wallpapers:
 		cmd = ['feh', '--bg-fill', '--no-fehbg']
 		cmd.extend(wallpapers)
-		return subprocess.call(cmd)
+		return call(cmd)
 
 def activate_crtc(sc, edid, output):
 	crtc = get_crtc(sc, edid)
-	if not crtc and DEFAULT in sc:
-		crtc = DEFAULT
+	if not crtc:
+		if DEFAULT in sc:
+			crtc = DEFAULT
+		else:
+			return -1
 	cmd = ['xrandr', '--output', output]
 	resolution = get_attr(sc, crtc, 'resolution', 'auto')
 	if resolution == 'auto':
@@ -76,16 +102,17 @@ def activate_crtc(sc, edid, output):
 		if not p_crtc or not p_position:
 			return
 		outputs = get_outputs()
+		# print(outputs)
 		for output in outputs:
-			if len(output) == 2 and output[1] == p_crtc.get('edid'):
+			if len(output) == 2 and output[1] in p_crtc.get('edid', []):
 				cmd.extend((POSITION[p_position], output[0]))
 				break
-	return subprocess.call(cmd)
+	return call(cmd)
 
 
 def main():
 	global DEFAULT
-	DEFAULT = os.environ.get('SCREENCONFIG_DEFAULT', 'default')
+	DEFAULT = os.environ.get('SCREENCONFIG_DEFAULT', DEFAULT)
 	action = os.environ.get('SRANDRD_ACTION')
 	output = None
 	if action:
@@ -97,8 +124,10 @@ def main():
 			sc = load(f)
 			edid = os.environ.get('SRANDRD_EDID')
 			screenid = os.environ.get('SRANDRD_SCREENID')
-			activate_crtc(sc, edid, output)
-			set_wallpapers(sc)
+			res = activate_crtc(sc, edid, output)
+			if res == 0:
+				set_wallpapers(sc)
+			return res
 
 if __name__ == "__main__":
 	sys.exit(main())
