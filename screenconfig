@@ -9,6 +9,7 @@ import sys
 import subprocess
 
 CONNECTED = 'connected'
+DISCONNECTED = 'disconnected'
 
 POSITION = {
 		'above':    '--above',
@@ -126,8 +127,10 @@ def main():
 	DEFAULT = os.environ.get('SCREENCONFIG_DEFAULT', DEFAULT)
 	action = os.environ.get('SRANDRD_ACTION')
 	output = None
-	if action:
-		output, action = action.split()
+	if not action:
+		return 1
+
+	output, action = action.split()
 	if action == CONNECTED:
 		with open(os.path.expandvars(os.path.join(
 			os.environ.get('XDG_CONFIG_HOME', os.path.join('$HOME', '.config')),
@@ -140,6 +143,9 @@ def main():
 			if res == 0:
 				set_wallpapers(sc)
 			return res
+	elif action == DISCONNECTED:
+		cmd = ['xrandr', '--output', output, '--off']
+		return call(cmd)
 
 
 if __name__ == "__main__":
