@@ -1,6 +1,7 @@
 # screenconfig
 
-`screenconfig` is a to automate the configuration of connected screens/monitors.
+`screenconfig` is a tool automate the configuration of connected
+screens/monitors.
 
 ## Usage
 
@@ -63,4 +64,5 @@ point:
 
 ## Related projects
 
-- `srandrd` simple notification daemon of screen events https://github.com/jceb/srandrd
+- `srandrd` simple notification daemon of screen events
+  https://github.com/jceb/srandrd
