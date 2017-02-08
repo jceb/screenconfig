@@ -19,8 +19,8 @@ iiyama: &iiyama
   position: {crtc: *laptop, position: above}
 benq: &benq
   edid: [D109801B00005445]
-  wallpaper: ~/wallpaper1920x1200.png
-  position: {crtc: *laptop, position: above}
+  wallpaper: ~/wallpaper2560x1440.png
+  position: {crtc: *laptop, position: left-of}
 samsung: &samsung
   edid: [2D4C03E800000000, 2D4C03E654573236]
   wallpaper: ~/wallpaper1920x1200.png
@@ -28,6 +28,12 @@ samsung: &samsung
 dell: &dell
   edid: [AC1040613239334C]
   wallpaper: ~/wallpaper1920x1080.png
+  position: {crtc: *laptop, position: right-of}
+univentionbeamer: &univentionbeamer
+  edid: ["7204870100001893"]
+  wallpaper: ~/wallpaper1280x1024.png
+  position: {crtc: *laptop, position: right-of}
+  resolution: 1280x1024
 
 # The default configuration that's applied if no other configuration matches.  A
 # different section can be selected by setting the environment variable
