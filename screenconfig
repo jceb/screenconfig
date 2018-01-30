@@ -47,7 +47,7 @@ def get_attr(sc, current, attr, default=None):
 	res = default
 	if attr in sc[current]:
 		res = sc[current][attr]
-	elif DEFAULT in sc:
+	elif DEFAULT in sc and attr in sc[DEFAULT]:
 		res = sc[DEFAULT].get(attr)
 	# print('get_attr', current, attr, res)
 	return res
@@ -107,6 +107,14 @@ def activate_crtc(sc, edid, output):
 		cmd.append('--auto')
 	else:
 		cmd.extend(('--mode', resolution))
+	
+	scale = get_attr(sc, crtc, 'scale', '1x1')
+	cmd.extend(("--scale", scale))
+
+	panning = get_attr(sc, crtc, 'panning', False)
+	if(panning):
+		cmd.extend(("--panning", panning))
+
 	position = get_attr(sc, crtc, 'position')
 	if position:
 		p_crtc = position.get('crtc')
