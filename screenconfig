@@ -12,141 +12,140 @@ CONNECTED = 'connected'
 DISCONNECTED = 'disconnected'
 
 POSITION = {
-		'above':    '--above',
-		'left-of':  '--left-of',
-		'right-of': '--right-of',
-		'below':    '--below',
-		'mirror':   '--same-as',
-		'same-as':  '--same-as',
-		}
+    'above':    '--above',
+    'left-of':  '--left-of',
+    'right-of': '--right-of',
+    'below':    '--below',
+    'mirror':   '--same-as',
+    'same-as':  '--same-as',
+}
 DEFAULT = 'default'
 
 
 def _call(f, cmd, *args, **kwargs):
-	# print(cmd)
-	return f(cmd, *args, **kwargs)
+    # print(cmd)
+    return f(cmd, *args, **kwargs)
 
 
 def call(cmd, *args, **kwargs):
-	return _call(subprocess.call, cmd, *args, **kwargs)
+    return _call(subprocess.call, cmd, *args, **kwargs)
 
 
 def check_output(cmd, *args, **kwargs):
-	return _call(subprocess.check_output, cmd, *args, **kwargs)
+    return _call(subprocess.check_output, cmd, *args, **kwargs)
 
 
 def get_crtc(sc, edid):
-	res = [crtc for crtc in sc
-		if crtc != DEFAULT and edid in sc[crtc].get('edid', [])]
-	if res:
-		return res[0]
-	return None
+    res = [crtc for crtc in sc
+           if crtc != DEFAULT and edid in sc[crtc].get('edid', [])]
+    if res:
+        return res[0]
+    return None
 
 
 def get_attr(sc, current, attr, default=None):
-	res = default
-	if attr in sc[current]:
-		res = sc[current][attr]
-	elif DEFAULT in sc:
-		res = sc[DEFAULT].get(attr)
-	# print('get_attr', current, attr, res)
-	return res
+    res = default
+    if attr in sc[current]:
+        res = sc[current][attr]
+    elif DEFAULT in sc:
+        res = sc[DEFAULT].get(attr)
+        # print('get_attr', current, attr, res)
+        return res
 
 
 def get_wallpaper(sc, edid):
-	crtc = get_crtc(sc, edid)
-	if not crtc:
-		if DEFAULT in sc:
-			crtc = DEFAULT
-		else:
-			return None
-	wallpaper = sc[crtc].get('wallpaper')
-	if not wallpaper:
-		if DEFAULT in sc:
-			wallpaper = sc[DEFAULT].get('wallpaper')
-		else:
-			return None
-	return os.path.expandvars(os.path.expanduser(wallpaper))
+    crtc = get_crtc(sc, edid)
+    if not crtc:
+        if DEFAULT in sc:
+            crtc = DEFAULT
+        else:
+            return None
+    wallpaper = sc[crtc].get('wallpaper')
+    if not wallpaper:
+        if DEFAULT in sc:
+            wallpaper = sc[DEFAULT].get('wallpaper')
+        else:
+            return None
+    return os.path.expandvars(os.path.expanduser(wallpaper))
 
 
 OUTPUTS = []
 
 
 def get_outputs():
-	global OUTPUTS
-	if not OUTPUTS:
-		OUTPUTS = [line.split() for line in
-				check_output(['srandrd', 'list']).decode('utf-8').split(os.linesep)]
-	return OUTPUTS
+    global OUTPUTS
+    if not OUTPUTS:
+        OUTPUTS = [line.split() for line in
+                   check_output(['srandrd', 'list']).decode('utf-8').split(os.linesep)]
+        return OUTPUTS
 
 
 def set_wallpapers(sc):
-	outputs = get_outputs()
-	wallpapers = []
-	for output in outputs:
-		if len(output) == 2:
-			wallpaper = get_wallpaper(sc, output[1])
-			if wallpaper:
-				wallpapers.append(wallpaper)
-	if wallpapers:
-		cmd = ['feh', '--bg-fill', '--no-fehbg']
-		cmd.extend(wallpapers)
-		return call(cmd)
+    outputs = get_outputs()
+    wallpapers = []
+    for output in outputs:
+        if len(output) == 2:
+            wallpaper = get_wallpaper(sc, output[1])
+            if wallpaper:
+                wallpapers.append(wallpaper)
+                if wallpapers:
+                    cmd = ['feh', '--bg-fill', '--no-fehbg']
+                    cmd.extend(wallpapers)
+                    return call(cmd)
 
 
 def activate_crtc(sc, edid, output):
-	crtc = get_crtc(sc, edid)
-	if not crtc:
-		if DEFAULT in sc:
-			crtc = DEFAULT
-		else:
-			return -1
-	cmd = ['xrandr', '--output', output]
-	resolution = get_attr(sc, crtc, 'resolution', 'auto')
-	if resolution == 'auto':
-		cmd.append('--auto')
-	else:
-		cmd.extend(('--mode', resolution))
-	position = get_attr(sc, crtc, 'position')
-	if position:
-		p_crtc = position.get('crtc')
-		p_position = position.get('position')
-		if not p_crtc or not p_position:
-			return
-		outputs = get_outputs()
-		# print(outputs)
-		for output in outputs:
-			if len(output) == 2 and output[1] in p_crtc.get('edid', []):
-				cmd.extend((POSITION[p_position], output[0]))
-				break
-	return call(cmd)
+    crtc = get_crtc(sc, edid)
+    if not crtc:
+        if DEFAULT in sc:
+            crtc = DEFAULT
+        else:
+            return -1
+    cmd = ['xrandr', '--output', output]
+    resolution = get_attr(sc, crtc, 'resolution', 'auto')
+    if resolution == 'auto':
+        cmd.append('--auto')
+    else:
+        cmd.extend(('--mode', resolution))
+        position = get_attr(sc, crtc, 'position')
+        if position:
+            p_crtc = position.get('crtc')
+            p_position = position.get('position')
+            if not p_crtc or not p_position:
+                return
+        outputs = get_outputs()
+        # print(outputs)
+        for output in outputs:
+            if len(output) == 2 and output[1] in p_crtc.get('edid', []):
+                cmd.extend((POSITION[p_position], output[0]))
+                break
+    return call(cmd)
 
 
 def main():
-	global DEFAULT
-	DEFAULT = os.environ.get('SCREENCONFIG_DEFAULT', DEFAULT)
-	action = os.environ.get('SRANDRD_ACTION')
-	output = None
-	if not action:
-		return 1
+    global DEFAULT
+    DEFAULT = os.environ.get('SCREENCONFIG_DEFAULT', DEFAULT)
+    action = os.environ.get('SRANDRD_ACTION')
+    output = None
+    if not action:
+        return 1
 
-	output, action = action.split()
-	if action == CONNECTED:
-		with open(os.path.expandvars(os.path.join(
-			os.environ.get('XDG_CONFIG_HOME', os.path.join('$HOME', '.config')),
-			'screenconfig', 'screenconfig.yaml'))) as f:
-			sc = load(f)
-			edid = os.environ.get('SRANDRD_EDID')
-			# screenid, set but not used
-			screenid = os.environ.get('SRANDRD_SCREENID')
-			res = activate_crtc(sc, edid, output)
-			if res == 0:
-				set_wallpapers(sc)
-			return res
-	elif action == DISCONNECTED:
-		cmd = ['xrandr', '--output', output, '--off']
-		return call(cmd)
+    output, action = action.split()
+    if action == CONNECTED:
+        with open(os.path.expandvars(os.path.join(
+            os.environ.get('XDG_CONFIG_HOME', os.path.join('$HOME', '.config')), 'screenconfig', 'screenconfig.yaml'))) as f:
+            sc = load(f)
+            edid = os.environ.get('SRANDRD_EDID')
+            # screenid, set but not used
+            # screenid = os.environ.get('SRANDRD_SCREENID')
+            res = activate_crtc(sc, edid, output)
+            if res == 0:
+                set_wallpapers(sc)
+                return res
+            elif action == DISCONNECTED:
+                cmd = ['xrandr', '--output', output, '--off']
+                return call(cmd)
 
 
 if __name__ == "__main__":
-	sys.exit(main())
+    sys.exit(main())
