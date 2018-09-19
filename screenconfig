@@ -8,6 +8,8 @@ import os
 import sys
 import subprocess
 
+version = '2018.9'
+
 CONNECTED = 'connected'
 DISCONNECTED = 'disconnected'
 
@@ -19,7 +21,7 @@ POSITION = {
     'mirror':   '--same-as',
     'same-as':  '--same-as',
 }
-DEFAULT = 'default'
+FALLBACK_MONITOR = 'monitors.fallback'
 
 
 def _call(f, cmd, *args, **kwargs):
@@ -37,7 +39,7 @@ def check_output(cmd, *args, **kwargs):
 
 def get_crtc(sc, edid):
     res = [crtc for crtc in sc
-           if crtc != DEFAULT and edid in sc[crtc].get('edid', [])]
+           if crtc != FALLBACK_MONITOR and edid in sc[crtc].get('edid', [])]
     if res:
         return res[0]
     return None
@@ -47,8 +49,8 @@ def get_attr(sc, current, attr, default=None):
     res = default
     if attr in sc[current]:
         res = sc[current][attr]
-    elif DEFAULT in sc:
-        res = sc[DEFAULT].get(attr)
+    elif FALLBACK_MONITOR in sc:
+        res = sc[FALLBACK_MONITOR].get(attr)
         # print('get_attr', current, attr, res)
         return res
 
@@ -56,14 +58,14 @@ def get_attr(sc, current, attr, default=None):
 def get_wallpaper(sc, edid):
     crtc = get_crtc(sc, edid)
     if not crtc:
-        if DEFAULT in sc:
-            crtc = DEFAULT
+        if FALLBACK_MONITOR in sc:
+            crtc = FALLBACK_MONITOR
         else:
             return None
     wallpaper = sc[crtc].get('wallpaper')
     if not wallpaper:
-        if DEFAULT in sc:
-            wallpaper = sc[DEFAULT].get('wallpaper')
+        if FALLBACK_MONITOR in sc:
+            wallpaper = sc[FALLBACK_MONITOR].get('wallpaper')
         else:
             return None
     return os.path.expandvars(os.path.expanduser(wallpaper))
@@ -97,8 +99,8 @@ def set_wallpapers(sc):
 def activate_crtc(sc, edid, output):
     crtc = get_crtc(sc, edid)
     if not crtc:
-        if DEFAULT in sc:
-            crtc = DEFAULT
+        if FALLBACK_MONITOR in sc:
+            crtc = FALLBACK_MONITOR
         else:
             return -1
     cmd = ['xrandr', '--output', output]
@@ -122,19 +124,24 @@ def activate_crtc(sc, edid, output):
     return call(cmd)
 
 
-def main():
-    global DEFAULT
-    DEFAULT = os.environ.get('SCREENCONFIG_DEFAULT', DEFAULT)
-    action = os.environ.get('SRANDRD_ACTION')
+def load_configuration():
+    with open(
+        os.path.expandvars(
+            os.path.join(
+                os.environ.get('XDG_CONFIG_HOME',
+                               os.path.join('$HOME', '.config')),
+                'screenconfig',
+                'screenconfig.yaml'))) as f:
+        return load(f)
+
+def main(action, fallback_monitor):
     output = None
     if not action:
         return 1
 
     output, action = action.split()
     if action == CONNECTED:
-        with open(os.path.expandvars(os.path.join(
-            os.environ.get('XDG_CONFIG_HOME', os.path.join('$HOME', '.config')), 'screenconfig', 'screenconfig.yaml'))) as f:
-            sc = load(f)
+        sc = load_configuration()
             edid = os.environ.get('SRANDRD_EDID')
             # screenid, set but not used
             # screenid = os.environ.get('SRANDRD_SCREENID')
@@ -142,10 +149,15 @@ def main():
             if res == 0:
                 set_wallpapers(sc)
                 return res
-            elif action == DISCONNECTED:
-                cmd = ['xrandr', '--output', output, '--off']
-                return call(cmd)
+
+    elif action == DISCONNECTED:
+        cmd = ['xrandr', '--output', output, '--off']
+        return call(cmd)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    global FALLBACK_MONITOR
+    FALLBACK_MONITOR = os.environ.get('SCREENCONFIG_DEFAULT',
+                                            FALLBACK_MONITOR)
+    action = os.environ.get('SRANDRD_ACTION')
+    sys.exit(main(action, FALLBACK_MONITOR))
