@@ -6,7 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Add description field for monitors
 - Add setup.py and proper python packaging
 
 ### Changed
+- Rename field edid to edids
 - Change indentation to spaces

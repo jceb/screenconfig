@@ -3,7 +3,8 @@
 #
 # See LICENSE for copyright and license details
 
-from yaml import load
+# from yaml import load
+import toml
 import os
 import sys
 import subprocess
@@ -24,17 +25,17 @@ POSITION = {
 FALLBACK_MONITOR = 'monitors.fallback'
 
 
-def _call(f, cmd, *args, **kwargs):
+def _execute(f, cmd, *args, **kwargs):
     # print(cmd)
     return f(cmd, *args, **kwargs)
 
 
-def call(cmd, *args, **kwargs):
-    return _call(subprocess.call, cmd, *args, **kwargs)
+def execetue(cmd, *args, **kwargs):
+    return _execute(subprocess.call, cmd, *args, **kwargs)
 
 
 def check_output(cmd, *args, **kwargs):
-    return _call(subprocess.check_output, cmd, *args, **kwargs)
+    return _execute(subprocess.check_output, cmd, *args, **kwargs)
 
 
 def get_crtc(sc, edid):
@@ -93,7 +94,7 @@ def set_wallpapers(sc):
                 if wallpapers:
                     cmd = ['feh', '--bg-fill', '--no-fehbg']
                     cmd.extend(wallpapers)
-                    return call(cmd)
+                    return execetue(cmd)
 
 
 def activate_crtc(sc, edid, output):
@@ -121,43 +122,57 @@ def activate_crtc(sc, edid, output):
             if len(output) == 2 and output[1] in p_crtc.get('edid', []):
                 cmd.extend((POSITION[p_position], output[0]))
                 break
-    return call(cmd)
+    return execetue(cmd)
 
 
-def load_configuration():
-    with open(
-        os.path.expandvars(
-            os.path.join(
-                os.environ.get('XDG_CONFIG_HOME',
-                               os.path.join('$HOME', '.config')),
-                'screenconfig',
-                'screenconfig.yaml'))) as f:
-        return load(f)
+def get_config_filename():
+    return os.path.join(
+        os.environ.get('XDG_CONFIG_HOME',
+                       os.path.join('$HOME', '.config')),
+        'screenconfig',
+        'screenconfig.toml')
 
-def main(action, fallback_monitor):
+
+def load_configuration(config_filename, loader):
+    with open(os.path.expandvars(config_filename)) as f
+        return loader(f)
+
+# output, action, edid, configuration -> configure monitor
+#
+
+def disable_output_command(output):
+        return ['xrandr', '--output', output, '--off']
+
+def _action(a):
+    if a == CONNECTED:
+        return activate_crtc
+    elif a == DISCONNECTED:
+        return disable_output_command
+
+def main(event, fallback_monitor):
     output = None
-    if not action:
+    if not event:
         return 1
 
-    output, action = action.split()
+    output, action = event.split()
     if action == CONNECTED:
-        sc = load_configuration()
-            edid = os.environ.get('SRANDRD_EDID')
-            # screenid, set but not used
-            # screenid = os.environ.get('SRANDRD_SCREENID')
-            res = activate_crtc(sc, edid, output)
-            if res == 0:
-                set_wallpapers(sc)
-                return res
+        sc = load_configuration(get_config_filename, toml.load)
+        edid = os.environ.get('SRANDRD_EDID')
+        # screenid, set but not used
+        # screenid = os.environ.get('SRANDRD_SCREENID')
+        res = activate_crtc(sc, edid, output)
+        if res == 0:
+            set_wallpapers(sc)
+            return res
 
     elif action == DISCONNECTED:
         cmd = ['xrandr', '--output', output, '--off']
-        return call(cmd)
+        return execetue(cmd)
 
 
 if __name__ == "__main__":
     global FALLBACK_MONITOR
     FALLBACK_MONITOR = os.environ.get('SCREENCONFIG_DEFAULT',
-                                            FALLBACK_MONITOR)
-    action = os.environ.get('SRANDRD_ACTION')
-    sys.exit(main(action, FALLBACK_MONITOR))
+                                      FALLBACK_MONITOR)
+    event = os.environ.get('SRANDRD_EVENT')
+    sys.exit(main(event, FALLBACK_MONITOR))

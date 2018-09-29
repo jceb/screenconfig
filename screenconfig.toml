@@ -6,52 +6,58 @@ title = "Screen configuration"
 # It's a good idea to give each of them an anchor (e.g. &laptop) so that it can
 # be referenced in other sections of the configuration
 [monitors.laptop]
+description = "Laptop"
 # EDID is an identifier that is unique to each screen.  If you call `srandrd
 # list` it will provide an overview of the connected screens with their EDIDs
-edid = ["E430044600000000"]
+edids = ["E430044600000000"]
 # The path to a wallpaper can be specified for each screen.  The wallpaper is
 # set through the tool "feh"
 wallpaper = "~/wallpaper1920x1080.png"
 
 [monitors.iiyama]
-edid = ["CD2646B40000306A"]
+description = "Iiyama"
+edids = ["CD2646B40000306A"]
 wallpaper = "~/wallpaper1280x1024.png"
 # The position of this screen relative to another screen, in this case
 # relative to the screen with the "&laptop" anchor.  Position is one of
 # right-of, left-of, above, below or same-as
-crtc = "monitors.laptop"
+reference_monitor = "monitors.laptop"
 position = "left-of"
 
 [monitors.benq]
-edid = ["D109801B00005445"]
+description = "Benq BL1152"
+edids = ["D109801B00005445"]
 wallpaper = "~/wallpaper2560x1440.png"
-crtc = "monitors.laptop"
+reference_monitor = "monitors.laptop"
 position = "left-of"
 
 [monitors.benq.DP-1]
-crtc = "benq"
 
 [monitors.benq.HDMI1]
-crtc = "monitors.benq.DP-1"
+reference_monitor = "monitors.benq.DP-1"
 position = "left-of"
 rotate = "left"
+wallpaper = "~/wallpaper1440x2560.png"
 
 [monitors.samsung]
-edid = ["2D4C03E800000000", "2D4C03E654573236"]
+description = "Samsung"
+edids = ["2D4C03E800000000", "2D4C03E654573236"]
 wallpaper = "~/wallpaper1920x1200.png"
-crtc = "monitors.laptop"
+reference_monitor = "monitors.laptop"
 position = "left-of"
 
 [monitors.dell]
-edid = ["AC1040613239334C"]
+description = "Dell"
+edids = ["AC1040613239334C"]
 wallpaper = "~/wallpaper1920x1080.png"
-crtc = "monitors.laptop"
+reference_monitor = "monitors.laptop"
 position = "right-of"
 
 [monitors.univentionbeamer]
-edid = ["7204870100001893"]
+description = "Acer"
+edids = ["7204870100001893"]
 wallpaper = "~/wallpaper1280x1024.png"
-crtc = "monitors.laptop"
+reference_monitor = "monitors.laptop"
 position = "right-of"
 # Resolution of this screen, either "auto" or a concrete resolution like
 # "800x600"
@@ -62,10 +68,11 @@ resolution = "1280x1024"
 # SCREENCONFIG_DEFAULT to the name of a different section.  This might be
 # useful to use the same configuration file for multiple computers.  Put the
 # following in your bashrc or window manager's start configuration
-# export SCREENCONFIG_DEFAULT="default-work"
+# export SCREENCONFIG_DEFAULT="monitors.fallback"
 [monitors.fallback]
-# edid = [] # edid is ignored because it's the fallback configuration
+# edids = [] # edid is ignored because it's the fallback configuration
 wallpaper = "~/wallpaper1920x1200.png"
-crtc = "monitors.laptop"
+reference_monitor = "monitors.laptop"
 position = "right-of"
 resolution = "auto"
+
