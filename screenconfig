@@ -8,29 +8,114 @@ import toml
 import os
 import sys
 import subprocess
+import functools
 
-version = '2018.9'
+version = '2018.10'
 
 CONNECTED = 'connected'
 DISCONNECTED = 'disconnected'
 
-POSITION = {
-    'above':    '--above',
-    'left-of':  '--left-of',
-    'right-of': '--right-of',
-    'below':    '--below',
-    'mirror':   '--same-as',
-    'same-as':  '--same-as',
-}
-FALLBACK_MONITOR = 'monitors.fallback'
+
+CONFIG_FILE = os.path.expandvars(os.path.join(
+        os.environ.get('XDG_CONFIG_HOME',
+                       os.path.join('$HOME', '.config')),
+        'screenconfig',
+        'screenconfig.toml'))
+
+DEFAULT_MONITOR = 'default'
+
+
+class Event():
+    def __init__(self, output=None, event=None, edid=None, screenid=None):
+        self.event = event
+        self.output = output
+        self.edid = edid
+        self.screenid = screenid
+
+
+class MonitorConfiguration():
+    def __init__(self, monitor_config):
+        """
+        @param :monitor_config: monitor configuration
+        """
+        self.monitor_config = monitor_config
+
+    def __str__(self):
+        return str(self.monitor_config)
+
+    def __getattr__(self, name):
+        if self.monitor_config:
+            return self.monitor_config.get(name, None)
+
+    def get(self, name, default=None):
+        if name in self.monitor_config:
+            return self.monitor_config[name]
+        else:
+            return default
+
+
+class GlobalConfiguration():
+    def __init__(self, outputs, monitors_config, default_monitor):
+        """
+        @param :outputs: dict of outputs and edids of the connected monitors
+        @param :monitors_config: monitor configuration
+        @param :default_monitor: default monitor in the configuration
+        """
+        self.outputs = outputs
+        self.monitors_config = monitors_config
+        self.default_monitor = default_monitor
+
+    def __str__(self):
+        return str(self.outputs, self.monitor_config, self.default_monitor)
+
+    def __getattr__(self, name):
+        if self.monitors:
+            return self.monitors.get(name, None)
+
+    @property
+    def monitors(self):
+        return self.monitors_config['monitors']
+
+    @property
+    def default(self):
+        if self.monitors:
+            return self.monitors[self.default_monitor]
+
+
+def first(l):
+    if l:
+        for e in l:
+            return e
+
+
+def compose(*funcs):
+    """Return a new function s.t.
+       compose(f,g,...)(x) == f(g(...(x)))"""
+    def inner(*args):
+        result = args
+        for f in reversed(funcs):
+            if type(result) in (list, tuple):
+                result = f(*result)
+            else:
+                result = f(result)
+        return result
+    return inner
+
+
+def jam(*funcs):
+    """Return a new function s.t.
+       jam(f,g,...)(x) == g(x), f(x)"""
+    def inner(*args):
+        for f in reversed(funcs):
+                f(*args)
+    return inner
 
 
 def _execute(f, cmd, *args, **kwargs):
-    # print(cmd)
     return f(cmd, *args, **kwargs)
 
 
-def execetue(cmd, *args, **kwargs):
+def execute(cmd, *args, **kwargs):
     return _execute(subprocess.call, cmd, *args, **kwargs)
 
 
@@ -38,141 +123,159 @@ def check_output(cmd, *args, **kwargs):
     return _execute(subprocess.check_output, cmd, *args, **kwargs)
 
 
-def get_crtc(sc, edid):
-    res = [crtc for crtc in sc
-           if crtc != FALLBACK_MONITOR and edid in sc[crtc].get('edid', [])]
-    if res:
-        return res[0]
-    return None
+def get_connected_outputs():
+    """
+    @returns dict {output: edid}
+    """
+    return {output_edid[0]: output_edid[1] if len(output_edid) == 2 else None
+            for line in check_output(
+                ['srandrd', 'list']).decode('utf-8').strip().split(os.linesep)
+            for output_edid in (line.split(' ', 1), )
+            }
 
 
-def get_attr(sc, current, attr, default=None):
-    res = default
-    if attr in sc[current]:
-        res = sc[current][attr]
-    elif FALLBACK_MONITOR in sc:
-        res = sc[FALLBACK_MONITOR].get(attr)
-        # print('get_attr', current, attr, res)
-        return res
+def merge_monitor_config(default_config, monitor_config, output=None):
+    merged_config = default_config.copy()
+    if monitor_config:
+        merged_config.update(monitor_config)
+
+    print('output', output)
+    if output:
+        print('outputs', monitor_config.get('outputs', {}))
+        merged_config.update(
+            monitor_config.get('outputs', {})
+            .get(output, {}))
+
+    if 'outputs' in merged_config:
+        del merged_config['outputs']
+    return merged_config
 
 
-def get_wallpaper(sc, edid):
-    crtc = get_crtc(sc, edid)
-    if not crtc:
-        if FALLBACK_MONITOR in sc:
-            crtc = FALLBACK_MONITOR
-        else:
-            return None
-    wallpaper = sc[crtc].get('wallpaper')
-    if not wallpaper:
-        if FALLBACK_MONITOR in sc:
-            wallpaper = sc[FALLBACK_MONITOR].get('wallpaper')
-        else:
-            return None
-    return os.path.expandvars(os.path.expanduser(wallpaper))
+def get_monitor_configuration(config, monitor, output=None):
+    assert config and monitor
+
+    return MonitorConfiguration(
+        merge_monitor_config(config.default,
+                             first(map(
+                                 config.monitors.get,
+                                 filter(lambda m: m == monitor,
+                                        config.monitors.keys())
+                             )),
+                             output))
 
 
-OUTPUTS = []
+def get_mon_configuration_for_edid(config, edid, output):
+    if not (config and edid and output):
+        return None
+
+    # find the right configuration, might be multiple if the configuration
+    # specifies the edid multiple times
+    monitor_config = first(filter(None, [
+        c if edid in c.get('edids', [])
+        or edid in c.get('ouptuts', {}).get(output, {}).get('edids', [])
+        else None
+        for c in config.monitors.values()
+    ]))
+
+    if not monitor_config:
+        return MonitorConfiguration(config.default)
+
+    # use the first configuration merge configuration
+    return MonitorConfiguration(
+        merge_monitor_config(config.default,
+                             monitor_config, output))
 
 
-def get_outputs():
-    global OUTPUTS
-    if not OUTPUTS:
-        OUTPUTS = [line.split() for line in
-                   check_output(['srandrd', 'list']).decode('utf-8').split(os.linesep)]
-        return OUTPUTS
+def get_wallpaper(monitor_config):
+    if monitor_config and monitor_config.wallpaper:
+        return os.path.expandvars(os.path.expanduser(monitor_config.wallpaper))
 
 
-def set_wallpapers(sc):
-    outputs = get_outputs()
-    wallpapers = []
-    for output in outputs:
-        if len(output) == 2:
-            wallpaper = get_wallpaper(sc, output[1])
-            if wallpaper:
-                wallpapers.append(wallpaper)
-                if wallpapers:
-                    cmd = ['feh', '--bg-fill', '--no-fehbg']
-                    cmd.extend(wallpapers)
-                    return execetue(cmd)
+def set_wallpapers(config, event, commands):
+    wallpapers = list(filter(None, map(
+        lambda output, edid: compose(get_wallpaper,
+                                     get_mon_configuration_for_edid)(config,
+                                                                     edid,
+                                                                     output),
+        config.outputs.keys(),
+        config.outputs.values()
+    )))
+
+    if wallpapers:
+        commands.append(['feh', '--bg-fill', '--no-fehbg'] + wallpapers)
+    return config, event, commands
 
 
-def activate_crtc(sc, edid, output):
-    crtc = get_crtc(sc, edid)
-    if not crtc:
-        if FALLBACK_MONITOR in sc:
-            crtc = FALLBACK_MONITOR
-        else:
-            return -1
-    cmd = ['xrandr', '--output', output]
-    resolution = get_attr(sc, crtc, 'resolution', 'auto')
-    if resolution == 'auto':
+def find_reference_output(config, reference_monitor, output=None):
+    monitor_config = get_monitor_configuration(config,
+                                               reference_monitor, output)
+    output = first(filter(None, map(
+        lambda output, edid: output if edid in monitor_config.edids else None,
+        config.outputs.keys(),
+        config.outputs.values()
+    )))
+    print('ref output', output)
+    if output:
+        return output
+
+
+def activate_crtc(config, event, commands):
+    monitor_config = get_mon_configuration_for_edid(config,
+                                                    event.edid,
+                                                    event.output)
+    if not monitor_config:
+        return None
+
+    print(monitor_config)
+    cmd = ['xrandr', '--output', event.output]
+    resolution = monitor_config.resolution
+    if not resolution or resolution == 'auto':
         cmd.append('--auto')
     else:
         cmd.extend(('--mode', resolution))
-        position = get_attr(sc, crtc, 'position')
-        if position:
-            p_crtc = position.get('crtc')
-            p_position = position.get('position')
-            if not p_crtc or not p_position:
-                return
-        outputs = get_outputs()
-        # print(outputs)
-        for output in outputs:
-            if len(output) == 2 and output[1] in p_crtc.get('edid', []):
-                cmd.extend((POSITION[p_position], output[0]))
-                break
-    return execetue(cmd)
+
+    if monitor_config.rotate:
+        cmd.extend(('--rotate', monitor_config.rotate))
+
+    if monitor_config.position and len(monitor_config.position) >= 2:
+        reference_output = find_reference_output(config,
+                                                 *monitor_config.position[1:3])
+        if reference_output and reference_output != event.output:
+            cmd.extend((monitor_config.position[0], reference_output))
+    commands.append(cmd)
+    return config, event, commands
 
 
-def get_config_filename():
-    return os.path.join(
-        os.environ.get('XDG_CONFIG_HOME',
-                       os.path.join('$HOME', '.config')),
-        'screenconfig',
-        'screenconfig.toml')
+def deactivate_crtc(config, event, commands):
+    commands.append(['xrandr', '--output', event.output, '--off'])
+    return config, event, commands
 
 
-def load_configuration(config_filename, loader):
-    with open(os.path.expandvars(config_filename)) as f
-        return loader(f)
+def process(config, event):
+    assert event and event.event and config
 
-# output, action, edid, configuration -> configure monitor
-#
+    if event.event == CONNECTED:
+        _, _, commands = compose(set_wallpapers,
+                                 activate_crtc)(config, event, [])
+    elif event.event == DISCONNECTED:
+        _, _, commands = deactivate_crtc(config, event, [])
 
-def disable_output_command(output):
-        return ['xrandr', '--output', output, '--off']
-
-def _action(a):
-    if a == CONNECTED:
-        return activate_crtc
-    elif a == DISCONNECTED:
-        return disable_output_command
-
-def main(event, fallback_monitor):
-    output = None
-    if not event:
-        return 1
-
-    output, action = event.split()
-    if action == CONNECTED:
-        sc = load_configuration(get_config_filename, toml.load)
-        edid = os.environ.get('SRANDRD_EDID')
-        # screenid, set but not used
-        # screenid = os.environ.get('SRANDRD_SCREENID')
-        res = activate_crtc(sc, edid, output)
-        if res == 0:
-            set_wallpapers(sc)
-            return res
-
-    elif action == DISCONNECTED:
-        cmd = ['xrandr', '--output', output, '--off']
-        return execetue(cmd)
+    return functools.reduce(
+        lambda r1, r2: r1 if r1 and r1 > 0 else r2,
+        map(jam(execute, print), commands))
 
 
 if __name__ == "__main__":
-    global FALLBACK_MONITOR
-    FALLBACK_MONITOR = os.environ.get('SCREENCONFIG_DEFAULT',
-                                      FALLBACK_MONITOR)
-    event = os.environ.get('SRANDRD_EVENT')
-    sys.exit(main(event, FALLBACK_MONITOR))
+    event = Event(
+        output=os.environ.get('SRANDRD_OUTPUT', None),
+        event=os.environ.get('SRANDRD_EVENT', None),
+        edid=os.environ.get('SRANDRD_EDID', None),
+        screenid=os.environ.get('SRANDRD_SCREENID', None)
+    )
+    global_config = GlobalConfiguration(
+        outputs=get_connected_outputs(),
+        monitors_config=toml.load(CONFIG_FILE),
+        default_monitor=os.environ.get('SCREENCONFIG_DEFAULT',
+                                       DEFAULT_MONITOR),
+    )
+    sys.exit(process(global_config,  event))

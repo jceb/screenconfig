@@ -48,7 +48,7 @@ point:
     # SCREENCONFIG_DEFAULT to the name of a different section.  This might be
     # useful to use the same configuration file for multiple computers.  Put the
     # following in your bashrc or window manager's start configuration
-    # export SCREENCONFIG_DEFAULT="default-work"
+    # export SCREENCONFIG_DEFAULT="monitors.fallback"
     default:
       wallpaper: ~/wallpaper1920x1200.png
       # Resolution of this screen, either "auto" or a concrete resolution like
