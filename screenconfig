@@ -203,19 +203,21 @@ def set_wallpapers(config, event, commands):
     return config, event, commands
 
 
-def find_reference_output(config, reference_monitor, _output=None):
-    if _output:
-        return _output
+def find_reference_output(config, reference_monitor, _reference_output=None):
+    if _reference_output:
+        return _reference_output
 
-    monitor_config = get_monitor_configuration(config,
-                                               reference_monitor, _output)
-    output = first(filter(None, map(
-        lambda output, edid: output if edid in monitor_config.edids else None,
+    reference_monitor_config = get_monitor_configuration(config,
+                                                         reference_monitor,
+                                                         _reference_output)
+    reference_output = first(filter(None, map(
+        lambda output, edid: output
+        if edid in reference_monitor_config.edids else None,
         config.outputs.keys(),
         config.outputs.values()
     )))
-    if output:
-        return output
+    if reference_output:
+        return reference_output
 
 
 def activate_crtc(config, event, commands):
@@ -261,7 +263,7 @@ def process(config, event):
     return functools.reduce(
         lambda r1, r2: r1 if r1 and r1 > 0 else r2,
         map(execute, commands))
-    # map(jam(execute, print), commands))
+        # map(jam(execute, print), commands))
 
 
 if __name__ == "__main__":

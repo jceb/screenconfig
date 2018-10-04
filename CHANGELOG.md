@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add setup.py and proper python packaging
 
 ### Changed
+- Improve variable names for finding the reference output
 - Update configuration
 - Change file format to TOML
 - Require position parameters to be real xrandr arguments, e.g.
