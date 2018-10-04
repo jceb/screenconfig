@@ -10,8 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add setup.py and proper python packaging
 
 ### Changed
+- Update configuration
 - Change file format to TOML
 - Require position parameters to be real xrandr arguments, e.g.
   "--left-of" instead of "left-of"
 - Rename field edid to edids
 - Change indentation to spaces
+
+### Removed
+- Remove support for YAML file format
+- Remove debug output

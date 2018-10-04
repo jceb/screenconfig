@@ -3,7 +3,6 @@
 #
 # See LICENSE for copyright and license details
 
-# from yaml import load
 import toml
 import os
 import sys
@@ -139,9 +138,7 @@ def merge_monitor_config(default_config, monitor_config, output=None):
     if monitor_config:
         merged_config.update(monitor_config)
 
-    print('output', output)
     if output:
-        print('outputs', monitor_config.get('outputs', {}))
         merged_config.update(
             monitor_config.get('outputs', {})
             .get(output, {}))
@@ -206,15 +203,17 @@ def set_wallpapers(config, event, commands):
     return config, event, commands
 
 
-def find_reference_output(config, reference_monitor, output=None):
+def find_reference_output(config, reference_monitor, _output=None):
+    if _output:
+        return _output
+
     monitor_config = get_monitor_configuration(config,
-                                               reference_monitor, output)
+                                               reference_monitor, _output)
     output = first(filter(None, map(
         lambda output, edid: output if edid in monitor_config.edids else None,
         config.outputs.keys(),
         config.outputs.values()
     )))
-    print('ref output', output)
     if output:
         return output
 
@@ -226,7 +225,6 @@ def activate_crtc(config, event, commands):
     if not monitor_config:
         return None
 
-    print(monitor_config)
     cmd = ['xrandr', '--output', event.output]
     resolution = monitor_config.resolution
     if not resolution or resolution == 'auto':
@@ -262,7 +260,8 @@ def process(config, event):
 
     return functools.reduce(
         lambda r1, r2: r1 if r1 and r1 > 0 else r2,
-        map(jam(execute, print), commands))
+        map(execute, commands))
+    # map(jam(execute, print), commands))
 
 
 if __name__ == "__main__":
