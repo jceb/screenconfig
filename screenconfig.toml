@@ -9,7 +9,7 @@ description = "Laptop"
 # EDID is an identifier that is unique to each screen.  If you call
 # `srandrd list` it will provide an overview of the connected screens with their
 # EDIDs
-edids = ["E430044600000000"]
+edids = ["E430044600000000", "7038000000000000"]
 # The path to a wallpaper can be specified for each screen.  The wallpaper is
 # set through the tool "feh"
 wallpaper = "~/wallpaper1920x1080.png"
@@ -37,20 +37,29 @@ wallpaper = "~/wallpaper2560x1440.png"
 # subsection
 [monitors.benq.outputs.DP-1]
 
+[monitors.benq.outputs.DP1-1]
+
 [monitors.benq.outputs.DP-1-1]
 
 [monitors.benq.outputs.HDMI1]
+
+[monitors.benq.outputs.HDMI2]
 # If you have multiple monitors with the same EDID that are connected at the
 # same time add the name of the output as the last element of the position to
 # set this monitor relative to it
-position = ["--left-of", "benq", "DP-1"]
+position = ["--left-of", "benq", "HDMI1"]
 rotate = "left"
-wallpaper = "~/wallpaper2560x1440.png"
+wallpaper = "~/wallpaper1440x2560.png"
+
+[monitors.benq.outputs.DP1-2]
+position = ["--left-of", "benq", "DP1-1"]
+rotate = "left"
+wallpaper = "~/wallpaper1440x2560.png"
 
 [monitors.benq.outputs.DP-1-2]
 position = ["--left-of", "benq", "DP-1-1"]
 rotate = "left"
-wallpaper = "~/wallpaper2560x1440.png"
+wallpaper = "~/wallpaper1440x2560.png"
 
 [monitors.samsung]
 description = "Samsung"
