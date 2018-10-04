@@ -20,3 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Remove support for YAML file format
 - Remove debug output
+
+### Fixed
+- Fix broken import in setup.py
