@@ -63,12 +63,12 @@ point:
     # same time add the name of the output as the last element of the position to
     # set this monitor relative to it
     position = ["--left-of", "benq", "DP-1"]
-    rotate = "left"
+    xrandr_args = ["--rotate", "left"]
     wallpaper = "~/wallpaper2560x1440.png"
 
     [monitors.benq.outputs.DP-1-2]
     position = ["--left-of", "benq", "DP-1-1"]
-    rotate = "left"
+    xrandr_args = ["--rotate", "left"]
     wallpaper = "~/wallpaper2560x1440.png"
 
     [monitors.samsung]

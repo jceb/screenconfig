@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Accept arbitrary xrandr parameters
 - Add work setup to configuration
 - Add description field for monitors
 - Add setup.py and proper python packaging
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change indentation to spaces
 
 ### Removed
+- Remove rotate option
 - Remove YAML configuration
 - Remove support for YAML file format
 - Remove debug output

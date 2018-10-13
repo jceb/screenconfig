@@ -234,8 +234,8 @@ def activate_crtc(config, event, commands):
     else:
         cmd.extend(('--mode', resolution))
 
-    if monitor_config.rotate:
-        cmd.extend(('--rotate', monitor_config.rotate))
+    if monitor_config.xrandr_args:
+        cmd.extend(monitor_config.xrandr_args)
 
     if monitor_config.position and len(monitor_config.position) >= 2:
         reference_output = find_reference_output(config,
