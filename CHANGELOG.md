@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add setup.py and proper python packaging
 
 ### Changed
+- Move script and configuration to screenconfig package
 - Improve variable names for finding the reference output
 - Update configuration
 - Change file format to TOML
@@ -20,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change indentation to spaces
 
 ### Removed
+- Remove YAML configuration
 - Remove support for YAML file format
 - Remove debug output
 
