@@ -3,12 +3,26 @@
 `screenconfig` is a tool automate the configuration of connected
 screens/monitors.
 
+## Installation
+
+* Install [`srandrd`](https://github.com/jceb/srandrd)
+* Install [`screenconfig`](https://github.com/jceb/screenconfig), e.g.
+  run `./setup.py install --user`
+* Create a personal configuration in
+  `~/.config/screenconfig/screenconfig.toml`.  Here is an
+  [example](https://github.com/jceb/screenconfig/screenconfig/screenconfig.toml).
+
 ## Usage
 
 `screenconfig` is used as a command for the simple randr daemon
 `srandrd`.  It shall be started through `srandrd` as follows:
 
-    srandrd screenconfig
+    srandrd -e screenconfig
+
+For testing purposes it's helpful to run `srandrd` in foreground and in
+verbose mode:
+
+    srandrd -v -n -e screenconfig
 
 ## Configuration
 
@@ -101,13 +115,6 @@ point:
     position = ["--right-of", "laptop"]
     resolution = "auto"
     wallpaper = "~/wallpaper1920x1200.png"
-
-## Installation
-
-* Install [`srandrd`](https://github.com/jceb/srandrd)
-* Copy `screenconfig` to a directory in `$PATH`
-* Create a personal configuration in
-  `~/.config/screenconfig/screenconfig.toml`
 
 ## Related projects
 
