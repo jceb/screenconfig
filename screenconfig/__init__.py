@@ -220,6 +220,16 @@ def find_reference_output(config, reference_monitor, _reference_output=None):
         return reference_output
 
 
+def format_cmd(event, cmd):
+    return [arg.format(event) for arg in cmd]
+
+
+def get_commands(event, cmdlist):
+    if cmdlist:
+        return [format_cmd(event, cmd) for cmd in cmdlist]
+    return []
+
+
 def activate_crtc(config, event, commands):
     monitor_config = get_mon_configuration_for_edid(config,
                                                     event.edid,
@@ -227,27 +237,34 @@ def activate_crtc(config, event, commands):
     if not monitor_config:
         return None
 
-    cmd = ['xrandr', '--output', event.output]
+    xrandr_cmd = ['xrandr', '--output', event.output]
     resolution = monitor_config.resolution
     if not resolution or resolution == 'auto':
-        cmd.append('--auto')
+        xrandr_cmd.append('--auto')
     else:
-        cmd.extend(('--mode', resolution))
+        xrandr_cmd.extend(('--mode', resolution))
 
     if monitor_config.xrandr_args:
-        cmd.extend(monitor_config.xrandr_args)
+        xrandr_cmd.extend(monitor_config.xrandr_args)
 
     if monitor_config.position and len(monitor_config.position) >= 2:
         reference_output = find_reference_output(config,
                                                  *monitor_config.position[1:3])
         if reference_output and reference_output != event.output:
-            cmd.extend((monitor_config.position[0], reference_output))
-    commands.append(cmd)
+            xrandr_cmd.extend((monitor_config.position[0], reference_output))
+
+    commands.append(xrandr_cmd)
+    commands.extend(get_commands(monitor_config.exec_on_disconnect))
     return config, event, commands
 
 
 def deactivate_crtc(config, event, commands):
+    monitor_config = get_mon_configuration_for_edid(config,
+                                                    event.edid,
+                                                    event.output)
+
     commands.append(['xrandr', '--output', event.output, '--off'])
+    commands.extend(get_commands(monitor_config.exec_on_disconnect))
     return config, event, commands
 
 

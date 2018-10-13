@@ -13,6 +13,25 @@ edids = ["E430044600000000", "7038000000000000"]
 # The path to a wallpaper can be specified for each screen.  The wallpaper is
 # set through the tool "feh"
 wallpaper = "~/wallpaper1920x1080.png"
+# List of commands that are executed when a monitor is connected or disconnected
+# - All SRANDRD_* environment variables of the event are available to the
+#   command and can be used by it.  If the command is prefixed with
+#   ["sh", "-c", ...] the variables can be used directly in the command's
+#   arguments.
+# - The event parameters can also be used in the command's arguments with the
+#   python string formatting syntax: {.ATTRIBUTE}.  The following attributes are
+#   available:
+#   - event: either connected or disconnected
+#   - output: name of the xrandr output that triggered the event
+#   - edid: EDID of the monitor
+#   - screenid: XINERAMA screen id
+# exec_on_connect = [
+# ["touch", "/tmp/test/file"],
+# ["sh", "-x", "-c", "touch /tmp/test/$SRANDRD_EVENT"],
+# ["touch", "/tmp/test/{.output}"]
+# ]
+# exec_on_disconnect = [
+# ]
 
 [monitors.iiyama]
 description = "Iiyama"

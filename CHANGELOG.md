@@ -6,8 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Add configuration options exec_on_connect and exec_on_disconnect that
+  take a list of commands that are executed at the various events
 - Add more details on how to install screenconfig
-- Accept arbitrary xrandr parameters
+- Add configuration option xrandr_args that accepts arbitrary parameters
+  for xrandr
 - Add work setup to configuration
 - Add description field for monitors
 - Add setup.py and proper python packaging
