@@ -29,4 +29,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove debug output
 
 ### Fixed
+- Set missing entrypoint for screenconfig
 - Fix broken import in setup.py

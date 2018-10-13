@@ -266,7 +266,7 @@ def process(config, event):
         # map(jam(execute, print), commands))
 
 
-if __name__ == "__main__":
+def main():
     event = Event(
         output=os.environ.get('SRANDRD_OUTPUT', None),
         event=os.environ.get('SRANDRD_EVENT', None),
@@ -279,4 +279,8 @@ if __name__ == "__main__":
         default_monitor=os.environ.get('SCREENCONFIG_DEFAULT',
                                        DEFAULT_MONITOR),
     )
-    sys.exit(process(global_config,  event))
+    return process(global_config,  event)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

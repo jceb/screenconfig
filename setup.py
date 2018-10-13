@@ -18,6 +18,11 @@ setuptools.setup(
     url="https://github.com/jceb/screensconfig",
     packages=setuptools.find_packages(),
     install_requires=['toml'],
+    entry_points={
+        'console_scripts': [
+            'screenconfig = screenconfig:main',
+        ]
+    },
     package_data={
         '': ['screenconfig.toml'],
     },
