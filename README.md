@@ -1,7 +1,17 @@
 # screenconfig
 
 `screenconfig` is a tool automate the configuration of connected
-screens/monitors.
+monitors.
+
+Why is that useful?  Suppose you have a laptop that you use at work, at
+home, and on the road and you frequently connect it to various
+monitors.  The monitors might be in different positions relative to your
+laptop.  This will cause you to repeatedly run `xrandr` and potentially
+other commands for setting your wallpaper aso.
+`screenconfig` set out to fix this by providing a simple file format
+that stores your preferences and an automated integration with `xrandr`
+that will do the hard work of executing the necessary commands to
+adapt the monitors to your preferences.
 
 ## Installation
 
@@ -15,7 +25,8 @@ screens/monitors.
 ## Usage
 
 `screenconfig` is used as a command for the simple randr daemon
-`srandrd`.  It shall be started through `srandrd` as follows:
+[`srandrd`](https://github.com/jceb/srandrd).  It shall be started
+through `srandrd` as follows:
 
     srandrd -e screenconfig
 
@@ -42,10 +53,29 @@ point:
     # EDID is an identifier that is unique to each screen.  If you call
     # `srandrd list` it will provide an overview of the connected screens with their
     # EDIDs
-    edids = ["E430044600000000"]
+    edids = ["E430044600000000", "7038000000000000"]
     # The path to a wallpaper can be specified for each screen.  The wallpaper is
     # set through the tool "feh"
     wallpaper = "~/wallpaper1920x1080.png"
+    # List of commands that are executed when a monitor is connected or disconnected
+    # - All SRANDRD_* environment variables of the event are available to the
+    #   command and can be used by it.  If the command is prefixed with
+    #   ["sh", "-c", ...] the variables can be used directly in the command's
+    #   arguments.
+    # - The event parameters can also be used in the command's arguments with the
+    #   python string formatting syntax: {.ATTRIBUTE}.  The following attributes are
+    #   available:
+    #   - event: either connected or disconnected
+    #   - output: name of the xrandr output that triggered the event
+    #   - edid: EDID of the monitor
+    #   - screenid: XINERAMA screen id
+    # exec_on_connect = [
+    # ["touch", "/tmp/test/file"],
+    # ["sh", "-x", "-c", "touch /tmp/test/$SRANDRD_EVENT"],
+    # ["touch", "/tmp/test/{.output}"]
+    # ]
+    # exec_on_disconnect = [
+    # ]
 
     [monitors.iiyama]
     description = "Iiyama"
@@ -70,20 +100,29 @@ point:
     # subsection
     [monitors.benq.outputs.DP-1]
 
+    [monitors.benq.outputs.DP1-1]
+
     [monitors.benq.outputs.DP-1-1]
 
     [monitors.benq.outputs.HDMI1]
+
+    [monitors.benq.outputs.HDMI2]
     # If you have multiple monitors with the same EDID that are connected at the
     # same time add the name of the output as the last element of the position to
     # set this monitor relative to it
-    position = ["--left-of", "benq", "DP-1"]
+    position = ["--left-of", "benq", "HDMI1"]
     xrandr_args = ["--rotate", "left"]
-    wallpaper = "~/wallpaper2560x1440.png"
+    wallpaper = "~/wallpaper1440x2560.png"
+
+    [monitors.benq.outputs.DP1-2]
+    position = ["--left-of", "benq", "DP1-1"]
+    xrandr_args = ["--rotate", "left"]
+    wallpaper = "~/wallpaper1440x2560.png"
 
     [monitors.benq.outputs.DP-1-2]
     position = ["--left-of", "benq", "DP-1-1"]
     xrandr_args = ["--rotate", "left"]
-    wallpaper = "~/wallpaper2560x1440.png"
+    wallpaper = "~/wallpaper1440x2560.png"
 
     [monitors.samsung]
     description = "Samsung"

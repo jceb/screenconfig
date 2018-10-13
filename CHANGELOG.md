@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Outline the motivation for screenconfig
 - Add configuration options exec_on_connect and exec_on_disconnect that
   take a list of commands that are executed at the various events
 - Add more details on how to install screenconfig
