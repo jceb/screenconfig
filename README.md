@@ -158,5 +158,5 @@ point:
 
 ## Related projects
 
-- `srandrd` simple notification daemon of screen events
-  [](https://github.com/jceb/srandrd)
+- [`autorandr`](https://github.com/phillipberndt/autorandr) Auto-detect the connected display hardware and load the appropriate X11 setup using xrandr
+- [`srandrd`](https://github.com/jceb/srandrd) simple notification daemon of screen events
