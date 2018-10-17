@@ -15,6 +15,7 @@ adapt the monitors to your preferences.
 
 ## Installation
 
+* Install [`feh`](https://feh.finalrewind.org/)
 * Install [`srandrd`](https://github.com/jceb/srandrd)
 * Install [`screenconfig`](https://github.com/jceb/screenconfig), e.g.
   run `./setup.py install --user`
