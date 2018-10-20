@@ -161,15 +161,15 @@ def get_monitor_configuration(config, monitor, output=None):
                              output))
 
 
-def get_mon_configuration_for_edid(config, edid, output):
-    if not (config and edid and output):
+def get_mon_configuration_for_edid(config, edid=None, output=None):
+    if not config:
         return None
 
     # find the right configuration, might be multiple if the configuration
     # specifies the edid multiple times
     monitor_config = first(filter(None, [
         c if edid in c.get('edids', [])
-        or edid in c.get('ouptuts', {}).get(output, {}).get('edids', [])
+        or edid in c.get('outputs', {}).get(output, {}).get('edids', [])
         else None
         for c in config.monitors.values()
     ]))
@@ -254,7 +254,7 @@ def activate_crtc(config, event, commands):
             xrandr_cmd.extend((monitor_config.position[0], reference_output))
 
     commands.append(xrandr_cmd)
-    commands.extend(get_commands(monitor_config.exec_on_disconnect))
+    commands.extend(get_commands(event, monitor_config.exec_on_disconnect))
     return config, event, commands
 
 
@@ -264,7 +264,8 @@ def deactivate_crtc(config, event, commands):
                                                     event.output)
 
     commands.append(['xrandr', '--output', event.output, '--off'])
-    commands.extend(get_commands(monitor_config.exec_on_disconnect))
+    if monitor_config:
+        commands.extend(get_commands(event, monitor_config.exec_on_disconnect))
     return config, event, commands
 
 

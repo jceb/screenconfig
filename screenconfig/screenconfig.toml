@@ -28,9 +28,9 @@ wallpaper = "~/wallpaper1920x1080.png"
 # exec_on_connect = [
 # ["touch", "/tmp/test/file"],
 # ["sh", "-x", "-c", "touch /tmp/test/$SRANDRD_EVENT"],
+# Don't specify exec_on_disconnect here, it will never be triggered
+# because EDID is not available!
 # ["touch", "/tmp/test/{.output}"]
-# ]
-# exec_on_disconnect = [
 # ]
 
 [monitors.iiyama]
@@ -110,3 +110,12 @@ wallpaper = "~/wallpaper1280x1024.png"
 position = ["--right-of", "laptop"]
 resolution = "auto"
 wallpaper = "~/wallpaper1920x1200.png"
+# exec_on_connect = [
+# ["touch", "/tmp/test/file"],
+# ["sh", "-x", "-c", "touch /tmp/test/$SRANDRD_EVENT"],
+# ["touch", "/tmp/test/{.output}"]
+# ]
+# The disconnect commands will only be triggered from the default
+# configuration because EDID is not available!
+# exec_on_disconnect = [
+# ]

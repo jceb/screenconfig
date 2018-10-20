@@ -74,6 +74,8 @@ point:
     # ["sh", "-x", "-c", "touch /tmp/test/$SRANDRD_EVENT"],
     # ["touch", "/tmp/test/{.output}"]
     # ]
+    # Don't specify exec_on_disconnect here, it will never be triggered
+    # because EDID is not available!
     # exec_on_disconnect = [
     # ]
 
@@ -154,6 +156,15 @@ point:
     position = ["--right-of", "laptop"]
     resolution = "auto"
     wallpaper = "~/wallpaper1920x1200.png"
+    # exec_on_connect = [
+    # ["touch", "/tmp/test/file"],
+    # ["sh", "-x", "-c", "touch /tmp/test/$SRANDRD_EVENT"],
+    # ["touch", "/tmp/test/{.output}"]
+    # ]
+    # The disconnect commands will only be triggered from the default
+    # configuration because EDID is not available!
+    # exec_on_disconnect = [
+    # ]
 
 ## Related projects
 

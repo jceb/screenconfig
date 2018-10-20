@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add setup.py and proper python packaging
 
 ### Changed
+- Make edid and output optional for get_mon_configuration_for_edid
 - Move script and configuration to screenconfig package
 - Improve variable names for finding the reference output
 - Update configuration
@@ -33,5 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove debug output
 
 ### Fixed
+- Add missing parameter event to get_commands
 - Set missing entrypoint for screenconfig
 - Fix broken import in setup.py
