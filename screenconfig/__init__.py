@@ -254,7 +254,7 @@ def activate_crtc(config, event, commands):
             xrandr_cmd.extend((monitor_config.position[0], reference_output))
 
     commands.append(xrandr_cmd)
-    commands.extend(get_commands(event, monitor_config.exec_on_disconnect))
+    commands.extend(get_commands(event, monitor_config.exec_on_connect))
     return config, event, commands
 
 
