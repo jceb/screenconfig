@@ -111,6 +111,7 @@ def jam(*funcs):
 
 
 def _execute(f, cmd, *args, **kwargs):
+    # print('_execute: ', ' '.join(cmd))
     return f(cmd, *args, **kwargs)
 
 
@@ -271,6 +272,8 @@ def deactivate_crtc(config, event, commands):
 
 def process(config, event):
     assert event and event.event and config
+
+    commands = []
 
     if event.event == CONNECTED:
         _, _, commands = compose(set_wallpapers,
