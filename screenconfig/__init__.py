@@ -84,7 +84,7 @@ class GlobalConfiguration:
 
 
 def first(l):
-    if l:
+    if l is not None:
         for e in l:
             return e
 
@@ -117,12 +117,22 @@ def jam(*funcs):
 
 
 def _execute(f, cmd, *args, **kwargs):
-    # print('_execute: ', ' '.join(cmd))
+    # print("_execute: ", " ".join(cmd))
     return f(cmd, *args, **kwargs)
 
 
 def execute(cmd, *args, **kwargs):
-    return _execute(subprocess.call, cmd, *args, **kwargs)
+    return _execute(
+        subprocess.call,
+        cmd,
+        *args,
+        **kwargs,
+        env={
+            # apparently required to make xrandr succeed https://github.com/libsdl-org/SDL/issues/4561#issuecomment-895552640
+            "SDL_VIDEO_X11_XRANDR": "0",
+            **os.environ,
+        }
+    )
 
 
 def check_output(cmd, *args, **kwargs):
@@ -237,15 +247,15 @@ def find_reference_output(config, reference_monitor, _reference_output=None):
             None,
             map(
                 lambda output, edid: output
-                if edid in reference_monitor_config.edids
+                if reference_monitor_config.edids is not None
+                and edid in reference_monitor_config.edids
                 else None,
                 config.outputs.keys(),
                 config.outputs.values(),
             ),
         )
     )
-    if reference_output:
-        return reference_output
+    return reference_output
 
 
 def format_cmd(event, cmd):
@@ -277,6 +287,10 @@ def activate_crtc(config, event, commands):
         reference_output = find_reference_output(config, *monitor_config.position[1:3])
         if reference_output and reference_output != event.output:
             xrandr_cmd.extend((monitor_config.position[0], reference_output))
+        else:
+            xrandr_cmd.extend(monitor_config.position)
+    elif monitor_config.position is not None:
+        xrandr_cmd.extend(monitor_config.position)
 
     commands.append(xrandr_cmd)
     commands.extend(get_commands(event, monitor_config.exec_on_connect))
@@ -302,7 +316,7 @@ def process(config, event):
     elif event.event == DISCONNECTED:
         _, _, commands = deactivate_crtc(config, event, [])
 
-    [print(" ".join(command)) for command in commands]
+    # [print(" ".join(command)) for command in commands]
     # map(jam(execute, print), commands)
     return functools.reduce(
         lambda r1, r2: r1 if r1 and r1 > 0 else r2, map(execute, commands)
