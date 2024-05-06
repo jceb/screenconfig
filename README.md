@@ -7,7 +7,7 @@ Why is that useful?  Suppose you have a laptop that you use at work, at
 home, and on the road and you frequently connect it to various
 monitors.  The monitors might be in different positions relative to your
 laptop.  This will cause you to repeatedly run `xrandr` and potentially
-other commands for setting your wallpaper aso.
+other commands for setting your wallpaper also.
 `screenconfig` set out to fix this by providing a simple file format
 that stores your preferences and an automated integration with `xrandr`
 that will do the hard work of executing the necessary commands to
@@ -21,7 +21,7 @@ adapt the monitors to your preferences.
   run `./setup.py install --user`
 * Create a personal configuration in
   `~/.config/screenconfig/screenconfig.toml`.  Here is an
-  [example](https://github.com/jceb/screenconfig/screenconfig/screenconfig.toml).
+  [example](screenconfig/screenconfig.toml).
 
 ## Usage
 
@@ -40,7 +40,7 @@ verbose mode:
 
 The configuration is stored in file
 `~/.config/screenconfig/screenconfig.toml`.  My [personal
-configuration](screenconfig.toml) should provide a good starting
+configuration](screenconfig/screenconfig.toml) should provide a good starting
 point:
 
     title = "Screen configuration"
